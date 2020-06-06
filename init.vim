@@ -10,6 +10,7 @@
 "   -> Remapped Mappings                                        "
 "   -> Spellcheck                                               "
 "   -> Misc Mappigns							                "
+"   -> Plugin Configs							                "
 "   -> Functions                                                "
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -30,7 +31,21 @@ let mapleader = "\<Space>"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Plugins							                            "
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+if empty(glob('~/.local/share/nvim/site/autoload/plug.vim'))
+  silent !curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
 
+call plug#begin('~/.config/nvim/plugged')
+
+Plug 'scrooloose/nerdtree'
+Plug 'scrooloose/nerdcommenter'
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
+
+call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " UI								                            "
@@ -220,8 +235,27 @@ map <leader>s? z=
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Misc Mappings 							                    "
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <leader>w :w<enter>
-nnoremap <leader>wq :wq<enter>
+nnoremap <silent> <leader>w :w<cr>
+nnoremap <silent> <leader>qq :q!<cr>
+nnoremap <silent> <leader>wq :wq<cr>
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Plugin Config						                            "
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Start NERDTree when a directory is selected
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | exe 'cd '.argv()[0] | endif
+" Toggle NERDTree
+nnoremap <leader>n :NERDTreeToggle<CR>
+
+" NERD comments add space between comment
+let g:NERDSpaceDelims = 1
+let g:NERDCompactSexyComs = 1
+let g:NERDDefaultAlign = 'left'
+let g:NERDToggleCheckAllLines = 1
+
+" Open a file
+nnoremap <leader><leader> :w<cr>:Files<cr>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Functions                                                     "
