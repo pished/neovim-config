@@ -1,23 +1,22 @@
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"+-------------------------------------------------------------+"
 " TOC:                          								"
 "   -> General				                        			"
 "   -> Plugins				                        			"
 "   -> UI							                            "
-"   -> Colors and Fonts				                            "
+"   -> Colors, Fonts and LSP		                            "
 "   -> Tabs and Spacing				                            "
 "   -> Buffers and Movement                                     "
 "   -> Status Line                                              "
 "   -> Remapped Mappings                                        "
-"   -> Spellcheck                                               "
 "   -> Misc Mappigns							                "
-"   -> Plugin Configs							                "
 "   -> Functions                                                "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" General							                            "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" History record length
+"+-------------------------------------------------------------+"
+
+" General {{{
+"""""""""""""
 set history=500
+set guicursor=
+set hidden
 
 " Enable per file plugins and spacing
 filetype plugin indent on
@@ -27,10 +26,16 @@ set autoread
 au FocusGained,BufEnter * checktime
 
 let mapleader = "\<Space>"
+set noswapfile
+set nobackup
+set undodir=~/.undodir
+set undofile
+set signcolumn=yes
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Plugins							                            "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" }}}
+
+" Plugins {{{
+"""""""""""""
 if empty(glob('~/.local/share/nvim/site/autoload/plug.vim'))
   silent !curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
@@ -41,15 +46,44 @@ call plug#begin('~/.config/nvim/plugged')
 
 Plug 'scrooloose/nerdtree'
 Plug 'scrooloose/nerdcommenter'
+Plug 'nvim-telescope/telescope.nvim'
+Plug 'neovim/nvim-lspconfig'
+Plug 'nvim-lua/completion-nvim'
+Plug 'nvim-treesitter/nvim-treesitter'
+Plug 'tpope/vim-fugitive'
+Plug 'colepeters/spacemacs-theme.vim'
+Plug 'mbbill/undotree'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
 
 call plug#end()
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" UI								                            "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Start NERDTree when a directory is selected
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | exe 'cd '.argv()[0] | endif
+" Toggle NERDTree
+nnoremap <leader>n :NERDTreeToggle<CR>
+
+" NERD comments add space between comment
+let g:NERDSpaceDelims = 1
+let g:NERDCompactSexyComs = 1
+let g:NERDDefaultAlign = 'left'
+let g:NERDToggleCheckAllLines = 1
+
+" fzf commands
+nnoremap <leader><leader> :Files<cr>
+nnoremap <leader>ps :lua require('telescope.builtin').grep_string({ search = vim.fn.input("Grep For > ")})<CR> 
+
+" undo tree
+nnoremap <F5> :UndotreeToggle<CR>
+
+" Auto goimport on save
+let g:go_fmt_command = "goimports"
+" }}}
+
+" UI {{{
+""""""""
 " Show x,y coordinates
 set ruler
 
@@ -92,19 +126,38 @@ set showmatch
 " Turn off error sounds
 set noerrorbells
 set novisualbell
+" }}}
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Colors and Fonts						                        "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Colors, Fonts and LSP {{{
+""""""""""""""""""""""
 " Enable syntax highlighting
 syntax enable
 
+" Disable folded background highlight
+highlight Folded ctermbg=NONE
+if (has("termguicolors"))
+set termguicolors
+endif
+set background=dark
+colorscheme spacemacs-theme
+
 " Setting default EOL for files : https://vim.fandom.com/wiki/File_format
 set ffs=unix,dos,mac
+"
+" startup the golang LSP
+lua << EOF
+require'lspconfig'.gopls.setup{}
+EOF
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Tabs and Spacing						                        "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Auto completion settings
+lua require'lspconfig'.gopls.setup{on_attach=require'completion'.on_attach}
+let g:completion_matching_strategy_list = ['exact', 'substring', 'fuzzy']
+set completeopt=menuone,noinsert,noselect
+set shortmess+=c
+" }}}
+
+" Tabs and Spacing {{{
+""""""""""""""""""""""
 " Use spaces instead of tabs
 set expandtab
 " Smarter tabs
@@ -124,10 +177,11 @@ set wrap
 set ai
 " Smart indent
 set si
+" }}}
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Buffers and Movement							                "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Buffers and Movement {{{
+""""""""""""""""""""""""""
+set scrolloff=8
 " Map <Space> to / (search) and Ctrl-<Space> to ? (backwards search)
 map <leader>f /
 map <leader><S-F> ?
@@ -157,7 +211,7 @@ map <leader>tw :tabclose<cr>
 map <leader>tm :tabmove 
 map <leader>t<leader> :tabnext 
 
-" Let 'tl' toggle between this and the last accessed tab
+" Let 'tt' toggle between this and the last accessed tab
 let g:lasttab = 1
 nmap <Leader>tt :exe "tabn ".g:lasttab<CR>
 au TabLeave * let g:lasttab = tabpagenr()
@@ -178,19 +232,19 @@ endtry
 
 " Return to last edit position when opening files (You want this!)
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+" }}}
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Status Line                                                   "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Status Line {{{
+"""""""""""""""""
 " Always show the status line
 set laststatus=2
 
 " Format the status line
 set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l\ \ Column:\ %c
+" }}}
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Remapped Mappings                                             "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Remapped Mappings {{{
+"""""""""""""""""""""""
 " Remap VIM 0 to first non-blank character
 map 0 ^
 
@@ -219,47 +273,72 @@ endfun
 if has("autocmd")
     autocmd BufWritePre *.txt,*.js,*.py,*.wiki,*.sh,*.coffee :call CleanExtraSpaces()
 endif
+" }}}
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Spellcheck                                                    "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Pressing ,ss will toggle and untoggle spell checking
-map <leader>ss :setlocal spell!<cr>
+" Misc Mappings {{{
+"""""""""""""""""""
+nnoremap <leader>ev :vsp $NVIM_CONFIG<cr>
+nnoremap <leader>sv :source $NVIM_CONFIG <bar> :doautocmd BufRead<cr>
+"
+lua << EOF
+local nvim_lsp = require('lspconfig')
+local on_attach = function(client, bufnr)
+  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
-" Shortcuts using <leader>
-map <leader>sn ]s
-map <leader>sp [s
-map <leader>sa zg
-map <leader>s? z=
+  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Misc Mappings 							                    "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <silent> <leader>w :w<cr>
-nnoremap <silent> <leader>qq :q!<cr>
-nnoremap <silent> <leader>wq :wq<cr>
+  -- Mappings.
+  local opts = { noremap=true, silent=true }
+  buf_set_keymap('n', 'gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>', opts)
+  buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', opts)
+  buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', opts)
+  buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
+  buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+  buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
+  buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
+  buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
+  buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
+  buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
+  buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+  buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
+  buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
+  buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
+  buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Plugin Config						                            "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Start NERDTree when a directory is selected
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | exe 'cd '.argv()[0] | endif
-" Toggle NERDTree
-nnoremap <leader>n :NERDTreeToggle<CR>
+  -- Set some keybinds conditional on server capabilities
+  if client.resolved_capabilities.document_formatting then
+    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+  elseif client.resolved_capabilities.document_range_formatting then
+    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+  end
 
-" NERD comments add space between comment
-let g:NERDSpaceDelims = 1
-let g:NERDCompactSexyComs = 1
-let g:NERDDefaultAlign = 'left'
-let g:NERDToggleCheckAllLines = 1
+  -- Set autocommands conditional on server_capabilities
+  if client.resolved_capabilities.document_highlight then
+    vim.api.nvim_exec([[
+      hi LspReferenceRead cterm=bold ctermbg=red guibg=LightYellow
+      hi LspReferenceText cterm=bold ctermbg=red guibg=LightYellow
+      hi LspReferenceWrite cterm=bold ctermbg=red guibg=LightYellow
+      augroup lsp_document_highlight
+        autocmd!
+        autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
+        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
+      augroup END
+    ]], false)
+  end
+end
 
-" Open a file
-nnoremap <leader><leader> :w<cr>:Files<cr>
+-- Use a loop to conveniently both setup defined servers 
+-- and map buffer local keybindings when the language server attaches
+local servers = { "pyright", "rust_analyzer", "tsserver" }
+for _, lsp in ipairs(servers) do
+  nvim_lsp[lsp].setup { on_attach = on_attach }
+end
+EOF
+" }}}
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Functions                                                     "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Functions {{{
+"""""""""""""""
 " Returns true if paste mode is enabled
 function! HasPaste()
     if &paste
@@ -288,3 +367,6 @@ function! VisualSelection(direction, extra_filter) range
     let @/ = l:pattern
     let @" = l:saved_reg
 endfunction
+" }}}
+
+" vim: set foldmethod=marker foldlevel=0:

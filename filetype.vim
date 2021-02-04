@@ -3,6 +3,7 @@
 " TOC:                          								"
 "   -> HTML/CSS                                                 "
 "   -> YAML/JSON                                                "
+"   -> HCL                                                      "
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " HTML/CSS							                            "
@@ -13,3 +14,8 @@ autocmd BufRead,BufNewFile *.htm,*.html,*.css,*.scss,*.sass setlocal tabstop=2 s
 " YAML/JSON							                            "
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 autocmd BufRead,BufNewFile *.yaml,*.json setlocal tabstop=2 shiftwidth=2 softtabstop=2
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" HCL   							                            "
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+autocmd BufNewFile,BufRead *.tf,*.tfvars setlocal tabstop=2 shiftwidth=2 softtabstop=2
